@@ -1,0 +1,60 @@
+A
+
+1.Find the class representing an Actor in the dataset (using filters).
+
+SELECT DISTINCT ?s WHERE {
+?s rdf:type owl:Class.
+?s rdfs:label ?b. FILTER regex(?b, "actor")
+}
+
+2. Find the super class for the class Actor.
+
+SELECT ?r WHERE {
+?s rdf:type owl:Class.
+?s rdfs:subClassOf ?r
+FILTER regex(str(?s), "ontology/Actor")
+}
+
+3. Find all the actors in the dataset.
+
+SELECT ?i WHERE {
+?i rdf:type <http://dbpedia.org/ontology/Actor>
+}
+
+4. Get  different  classes  that  are  defined  as  range  of  the  properties  that  have  the  classActor defined as their domain.
+
+SELECT DISTINCT ?r WHERE {
+?s rdf:type owl:Class.
+?p rdfs:domain ?s.
+?p rdfs:range ?r.
+FILTER regex(str(?s), "ontology/Actor")
+}
+
+5. Find the super property of the goldenRaspberryAward property.
+
+SELECT ?sp WHERE {
+<http://dbpedia.org/ontology/goldenRaspberryAward> rdfs:subPropertyOf ?sp
+}
+
+6. Return all the properties that have the class Actor as either their range or domain.
+
+SELECT ?p WHERE {
+{
+     ?s rdf:type owl:Class.
+     ?p rdfs:domain ?s
+     FILTER regex(str(?s), "ontology/Actor")
+}
+UNION {
+     ?s rdf:type owl:Class.
+     ?p rdfs:range ?s
+     FILTER regex(str(?s), "ontology/Actor")
+}
+}
+
+7. Return all persons that are not actors.
+
+SELECT ?person WHERE {
+?person rdf:type <http://dbpedia.org/ontology/Person>.
+MINUS { ?person rdf:type <http://dbpedia.org/ontology/Actor> }
+}
+

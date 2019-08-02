@@ -1,0 +1,142 @@
+B
+
+1.  List the country, station type, latitude, and longitude details of each station. 
+Note: Limit the query to 25 results, and extract only the string values of the requiredobject and not the whole IRIs.
+
+PREFIX schema: <http://qweb.cs.aau.dk/airbase/schema/>
+PREFIX property: <http://qweb.cs.aau.dk/airbase/property/> 
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT str(?country) as ?Country, str(?stationType) as ?StationType, ?latitude, ?longitude WHERE{
+?obs schema:station ?st.
+?st property:type ?stationType.
+?st property:longitudeDegree ?longitude.
+?st property:latitudeDegree ?latitude.
+{?st schema:inCity ?city.
+?city schema:locatedIn ?cntry.}
+UNION{
+?st schema:inCountry ?cntry.
+}
+?cntry property:country ?country.	
+}
+GROUP BY ?country, ?stationType, ?latitude, ?longitude
+LIMIT 25
+
+
+2.  List the 10 highest averages of C6H6 emission and the country and the year on which they were recorded. 
+Note:A sensor has a property (defined through the prefix:<http://qweb.cs.aau.dk/airbase/property/>)stastisticShortName,  
+and  it  can be Mean, Max, etc.
+
+PREFIX schema: <http://qweb.cs.aau.dk/airbase/schema/>
+PREFIX property: <http://qweb.cs.aau.dk/airbase/property/> 
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT AVG(?C6H6), ?country, ?year WHERE{
+?obs schema:C6H6 ?C6H6.
+?obs schema:station ?st.
+{?st schema:inCity ?city.
+?city schema:locatedIn ?cntry.}
+UNION{
+?st schema:inCountry ?cntry.
+}
+?cntry property:country ?country.
+?obs schema:year ?years.
+?years property:yearNum ?year.
+?obs schema:sensor ?sensor .
+?sensor property:statisticShortName "Mean"^^xsd:string.
+}
+ORDER BY DESC(?C6H6)
+LIMIT 10 
+
+
+
+3.  For each city and property type, give the yearly average emission for NO2, SO2, PB,and PM10.
+PREFIX schema: <http://qweb.cs.aau.dk/airbase/schema/>
+PREFIX property: <http://qweb.cs.aau.dk/airbase/property/> 
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT str(?City) as ?City, str(?type) as ?Type, AVG(?NO2) as ?NO2, AVG(?SO2) as ?SO2, AVG(?PB) as ?PB, AVG(?PM10) as ?PM10
+WHERE{
+?obs schema:station ?station.
+?station property:type ?type.
+?station schema:inCity ?city.
+?city property:city ?City.
+{?obs schema:NO2 ?NO2.}
+UNION
+{?obs schema:SO2 ?SO2.}
+UNION
+{?obs schema:Pb ?PB.}
+UNION
+{?obs schema:PM10 ?PM10.}
+?obs schema:sensor ?sensor.
+?sensor property:statisticShortName "Mean"^^xsd:string. 
+}
+GROUP BY str(?City) str(?type)
+
+4. Annual mean C6H6 concentrations observed at traffic stations in 2011
+
+PREFIX schema: <http://qweb.cs.aau.dk/airbase/schema/>
+PREFIX property: <http://qweb.cs.aau.dk/airbase/property/> 
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?station ?longitude ?latitude (avg(?C6H6) as ?avgC6H6) WHERE{
+?obs schema:C6H6 ?C6H6.
+?obs schema:station ?station.
+?station property:longitudeDegree ?longitude.
+?station property:latitudeDegree ?latitude.
+?station property:type "Traffic"^^xsd:string.
+?obs schema:year ?year.
+?year property:yearNum "2011"^^xsd:integer.
+{  
+?station schema:inCity ?city.
+?city schema:locatedIn ?country. 
+} 
+UNION{
+?station schema:inCountry ?country.
+}
+?country property:isoCode ?isocode.
+?obs schema:sensor ?sensor.
+?sensor property:statisticShortName "Mean"^^xsd:string . 
+FILTER(?isocode IN ("AT"^^xsd:string, "BE"^^xsd:string, "BG"^^xsd:string, "CH"^^xsd:string, "CY"^^xsd:string, "CZ"^^xsd:string, "DE"^^xsd:string, "DK"^^xsd:string, "EE"^^xsd:string, "ES"^^xsd:string, "FI"^^xsd:string, "FR"^^xsd:string, "GB"^^xsd:string, "GR"^^xsd:string, "HU"^^xsd:string, "IE"^^xsd:string, "IS"^^xsd:string, "IT"^^xsd:string, "LI"^^xsd:string, "LT"^^xsd:string, "LU"^^xsd:string, "LV"^^xsd:string, "MT"^^xsd:string, "NL"^^xsd:string, "NO"^^xsd:string, "PL"^^xsd:string, "PT"^^xsd:string, "RO"^^xsd:string, "SK"^^xsd:string, "SI"^^xsd:string, "SE"^^xsd:string, "TR"^^xsd:string))
+}
+
+5. Annual mean SO2 concentration observed at (sub)urban background stations at years between 2007 and 2012
+
+PREFIX schema: <http://qweb.cs.aau.dk/airbase/schema/>
+PREFIX property: <http://qweb.cs.aau.dk/airbase/property/> 
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?years (avg(?SO2) as ?avgSO2) WHERE {
+?obs schema:SO2 ?SO2.
+?obs schema:station ?station.
+?station property:longitudeDegree ?long.
+?station property:latitudeDegree ?lat.
+?station property:type "Background"^^xsd:string .
+?station property:areaType ?class.
+?obs schema:year ?year.
+?year property:yearNum ?years.
+?obs schema:sensor ?sensor.
+?sensor property:statisticShortName "Mean"^^xsd:string. 
+FILTER (?class in ("suburban"^^xsd:string, "urban"^^xsd:string) && ?years >= 2007 && ?years <= 2012)
+}GROUP BY ?years
+
+6. Annual mean Ozone concentrations observed at Industrial stations in 2012
+
+PREFIX schema: <http://qweb.cs.aau.dk/airbase/schema/>
+PREFIX property: <http://qweb.cs.aau.dk/airbase/property/> 
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?station ?longitude ?latitude (avg(?o3) as ?avgOzone) WHERE{
+?obs schema:O3 ?o3.
+?obs schema:station ?station.
+?station property:longitudeDegree ?longitude.
+?station property:latitudeDegree ?latitude.
+?station property:type "Industrial"^^xsd:string.
+?obs schema:year ?year.
+?year property:yearNum "2012"^^xsd:integer.
+{  
+?station schema:inCity ?city.
+?city schema:locatedIn ?country. 
+} 
+UNION{
+?station schema:inCountry ?country.
+}
+?country property:isoCode ?isocode.
+?obs schema:sensor ?sensor.
+?sensor property:statisticShortName "Mean"^^xsd:string . 
+FILTER(?isocode IN ("AT"^^xsd:string, "BE"^^xsd:string, "BG"^^xsd:string, "CH"^^xsd:string, "CY"^^xsd:string, "CZ"^^xsd:string, "DE"^^xsd:string, "DK"^^xsd:string, "EE"^^xsd:string, "ES"^^xsd:string, "FI"^^xsd:string, "FR"^^xsd:string, "GB"^^xsd:string, "GR"^^xsd:string, "HU"^^xsd:string, "IE"^^xsd:string, "IS"^^xsd:string, "IT"^^xsd:string, "LI"^^xsd:string, "LT"^^xsd:string, "LU"^^xsd:string, "LV"^^xsd:string, "MT"^^xsd:string, "NL"^^xsd:string, "NO"^^xsd:string, "PL"^^xsd:string, "PT"^^xsd:string, "RO"^^xsd:string, "SK"^^xsd:string, "SI"^^xsd:string, "SE"^^xsd:string, "TR"^^xsd:string))
+}
